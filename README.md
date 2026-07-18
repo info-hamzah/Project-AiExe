@@ -121,14 +121,18 @@ The project docs are indexed as a knowledge graph (89 nodes / 121 edges / 8 comm
 
 ![Project knowledge graph](docs/assets/knowledge-graph.svg)
 
-## Running the frontend
+## Running locally (Module 1)
 
 ```bash
+docker compose up -d                # Postgres 16 + migrations (ports: 5433)
 cd frontend
 npm install
-npm run dev          # http://localhost:3000  ·  /design = design-system reference
-# NEXT_PUBLIC_UI_REVAMP=0 disables the revamp shell (legacy-embedding parity mode)
+npm run seed                        # idempotent demo data (wiki pricing, persona users)
+DATABASE_URL=postgres://aiexe:aiexe@localhost:5433/aiexe npm run dev
+# → http://localhost:3000 · /roles · /packages · /design
 ```
+
+Without `DATABASE_URL` the app falls back to in-memory demo stores (no Docker needed, resets on restart). `NEXT_PUBLIC_UI_REVAMP=0` disables the revamp shell (legacy-embedding parity mode). Full plan + acceptance checklist: [`docs/module-1-plan.md`](docs/module-1-plan.md).
 
 ## Competitive positioning (from market.md)
 

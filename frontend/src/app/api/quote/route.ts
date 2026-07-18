@@ -9,7 +9,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url)
   try {
     return NextResponse.json(
-      pricingStore.priceFor(url.searchParams.get("packageId") ?? "", url.searchParams.get("itemKey") ?? ""),
+      await pricingStore.priceFor(url.searchParams.get("packageId") ?? "", url.searchParams.get("itemKey") ?? ""),
     )
   } catch (e) {
     const err = e as Error & { status?: number }

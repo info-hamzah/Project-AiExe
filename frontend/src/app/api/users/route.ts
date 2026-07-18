@@ -5,5 +5,5 @@ export const dynamic = "force-dynamic"
 import { rbacStore } from "@/lib/rbacStore"
 
 export async function GET() {
-  return NextResponse.json(rbacStore.listUsers())
+  return NextResponse.json(await rbacStore.listUsers())
 }
