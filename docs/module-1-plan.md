@@ -1,5 +1,7 @@
 # Module 1 — Admin Core, locally deployable
 
+> ✅ **Status 2026-07-18: COMPLETE.** Sessions 1–3 delivered and verified (all 5 checklist items pass; item 4 restart-persistence proven on Postgres). Note: browser-level Playwright specs deferred to Phase D test gates — flows are covered today by scripted API e2e + 8 vitest unit tests (resolver + pricing).
+
 **Decided 2026-07-18:** scope = Admin Core (RBAC + Packages/Pricing + sneak-peek gating) · persistence = Postgres via docker-compose · auth = dev mock user-switcher.
 
 **Goal:** one command brings up a persistent local build where you can log in as different personas and *see role + tier changes gate the product* — the "operational independence" story, testable end-to-end on your machine.

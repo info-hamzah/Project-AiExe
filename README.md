@@ -128,8 +128,8 @@ docker compose up -d                # Postgres 16 + migrations (ports: 5433)
 cd frontend
 npm install
 npm run seed                        # idempotent demo data (wiki pricing, persona users)
-DATABASE_URL=postgres://aiexe:aiexe@localhost:5433/aiexe npm run dev
-# → http://localhost:3000 · /roles · /packages · /design
+DATABASE_URL=postgres://aiexe:aiexe@localhost:5433/aiexe NEXT_PUBLIC_DEV_AUTH=1 npm run dev
+# → http://localhost:3000 · persona switcher in the header · /roles · /packages · /design
 ```
 
 Without `DATABASE_URL` the app falls back to in-memory demo stores (no Docker needed, resets on restart). `NEXT_PUBLIC_UI_REVAMP=0` disables the revamp shell (legacy-embedding parity mode). Full plan + acceptance checklist: [`docs/module-1-plan.md`](docs/module-1-plan.md).
