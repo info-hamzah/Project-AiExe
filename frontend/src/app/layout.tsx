@@ -8,7 +8,7 @@ import {
   TeamOutlined,
 } from "@ant-design/icons"
 import { AntdRegistry } from "@ant-design/nextjs-registry"
-import { Avatar, ConfigProvider, Typography } from "antd"
+import { App as AntApp, Avatar, ConfigProvider, Typography } from "antd"
 import en_US from "antd/locale/en_US"
 import { Inter } from "next/font/google"
 import { usePathname, useRouter } from "next/navigation"
@@ -46,6 +46,7 @@ const RootLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
       <body>
         <AntdRegistry>
           <ConfigProvider theme={infominaTheme} locale={en_US}>
+            <AntApp>
             {uiRevampEnabled ? (
               <AppShell
                 menuItems={menuItems}
@@ -63,6 +64,7 @@ const RootLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
             ) : (
               children
             )}
+            </AntApp>
           </ConfigProvider>
         </AntdRegistry>
       </body>
