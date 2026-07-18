@@ -4,6 +4,7 @@ import {
   AppstoreOutlined,
   BgColorsOutlined,
   DollarOutlined,
+  FileSearchOutlined,
   PartitionOutlined,
   TeamOutlined,
 } from "@ant-design/icons"
@@ -18,6 +19,7 @@ import { brand } from "@/theme/tokens"
 /** Menu registry: permission `null` = visible to everyone. */
 const MENU = [
   { key: "/", icon: <AppstoreOutlined />, label: "Dashboard", permission: null },
+  { key: "/search", icon: <FileSearchOutlined />, label: "Search & Reports", permission: "reports.search" },
   { key: "/roles", icon: <TeamOutlined />, label: "Roles & Access", permission: "roles.view" },
   { key: "/packages", icon: <DollarOutlined />, label: "Packages & Pricing", permission: "packages.view" },
   { key: "/graph", icon: <PartitionOutlined />, label: "Relationship Graph", permission: "graph.view" },

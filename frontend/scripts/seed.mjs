@@ -39,6 +39,7 @@ const bundle = (on) => Object.fromEntries(TOPUP_BUNDLE.map((k) => [k, on]))
 
 const ROLES = [
   ["Super Admin", "Full platform access", true, ALL_KEYS],
+  ["Member", "Base subscriber role (all customers)", false, ["reports.search", "reports.purchase", "graph.view", "dashboards.view", "dashboards.create"]],
   ["Finance", "Finance and reconciliation", false, ["finance.view", "finance.reconcile", "packages.view", "users.view"]],
   ["Sales", "Customer-facing sales role", false, ["reports.search", "reports.purchase", "graph.view", "dashboards.view", "users.view"]],
   ["Analyst", "Research and monitoring", false, ["reports.search", "graph.view", "monitoring.manage", "dashboards.view", "dashboards.create"]],
@@ -46,10 +47,10 @@ const ROLES = [
 
 const USERS = [
   ["Hamzah (Admin)", "admin@demo.aiexe.my", ["Super Admin"], "Pro"],
-  ["Aina Rahman", "aina@demo.aiexe.my", ["Finance"], "Pro"],
-  ["Marcus Lee", "marcus@demo.aiexe.my", ["Sales"], "Pro"],
-  ["Priya Nair", "priya@demo.aiexe.my", ["Analyst"], "Elite"],
-  ["Encik Explorer", "explorer@demo.aiexe.my", [], "Explorer"],
+  ["Aina Rahman", "aina@demo.aiexe.my", ["Finance", "Member"], "Pro"],
+  ["Marcus Lee", "marcus@demo.aiexe.my", ["Sales", "Member"], "Pro"],
+  ["Priya Nair", "priya@demo.aiexe.my", ["Analyst", "Member"], "Elite"],
+  ["Encik Explorer", "explorer@demo.aiexe.my", ["Member"], "Explorer"],
 ]
 
 // [name, isDefault, cycle, feeCents, promoCents, entitlements, credits]

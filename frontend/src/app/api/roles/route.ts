@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 
+import { requirePermission, toErrorResponse } from "@/lib/authz"
+
 export const dynamic = "force-dynamic"
 
 import { rbacStore } from "@/lib/rbacStore"
@@ -12,6 +14,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    await requirePermission("roles.manage")
     const body = await req.json()
     return NextResponse.json(await rbacStore.createRole(body, ACTOR), { status: 201 })
   } catch (e) {
