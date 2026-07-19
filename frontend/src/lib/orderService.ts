@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto"
 
 import { dbEnabled, q, tx } from "@/lib/db"
+import { partnerService } from "@/lib/partnerService"
 import { pricingStore } from "@/lib/pricingStore"
 import type { PriceBreakdown } from "@/types/pricing"
 
@@ -63,9 +64,25 @@ export async function purchase(input: CreateOrderInput): Promise<OrderView> {
   const quote = await pricingStore.priceFor(input.packageId, input.itemKey)
   const used = await creditsUsed(input.buyerId, input.itemKey)
   const creditUsed = used < input.creditAllowance
-  const pinned = {
+
+  // B2B2B channel context (PA-6): partner discount touches the service-fee
+  // component ONLY — data cost is pass-through, never discounted (guardrail).
+  const channel = dbEnabled ? await partnerService.channelForBuyer(input.buyerId) : null
+  let serviceFeeCents = quote.serviceFeeCents
+  let channelNote: Record<string, unknown> = {}
+  if (channel?.type === "partner" && channel.discountPct > 0 && !creditUsed) {
+    serviceFeeCents = Math.round(quote.serviceFeeCents * (1 - channel.discountPct / 100))
+    channelNote = { partnerDiscountPct: channel.discountPct, partnerOrg: channel.orgName }
+  }
+  const discounted = {
     ...quote,
+    serviceFeeCents,
+    totalCents: quote.dataCostCents + serviceFeeCents + quote.sstCents,
+  }
+  const pinned = {
+    ...discounted,
     ...(creditUsed ? { dataCostCents: 0, serviceFeeCents: 0, sstCents: 0, totalCents: 0, creditUsed: true } : {}),
+    ...channelNote,
     meta: { companyKey: input.companyKey, companyName: input.companyName, itemName: input.itemName },
   }
 
@@ -118,6 +135,17 @@ export async function purchase(input: CreateOrderInput): Promise<OrderView> {
     )
     return newOrderId
   })
+  // Settled-only side effect (ADR-002 rule 4): reseller commission binds after commit,
+  // computed on the margin component only. Zero-margin credit orders earn nothing.
+  if (channel?.type === "reseller" && channel.commissionPct > 0 && pinned.serviceFeeCents > 0) {
+    await partnerService.recordCommission({
+      orderId,
+      orgId: channel.orgId,
+      grossCents: pinned.totalCents,
+      marginCents: pinned.serviceFeeCents,
+      commissionPct: channel.commissionPct,
+    })
+  }
   // read after commit — the pool connection can't see uncommitted tx rows
   return getOrder(orderId)
 }

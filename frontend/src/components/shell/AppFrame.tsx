@@ -5,6 +5,7 @@ import {
   BgColorsOutlined,
   DollarOutlined,
   FileSearchOutlined,
+  ShopOutlined,
   PartitionOutlined,
   TeamOutlined,
 } from "@ant-design/icons"
@@ -22,6 +23,8 @@ const MENU = [
   { key: "/search", icon: <FileSearchOutlined />, label: "Search & Reports", permission: "reports.search" },
   { key: "/roles", icon: <TeamOutlined />, label: "Roles & Access", permission: "roles.view" },
   { key: "/packages", icon: <DollarOutlined />, label: "Packages & Pricing", permission: "packages.view" },
+  { key: "/partners", icon: <ShopOutlined />, label: "Partners & Resellers", permission: "partners.view" },
+  { key: "/partner", icon: <ShopOutlined />, label: "Partner Portal", permission: "partner.portal" },
   { key: "/graph", icon: <PartitionOutlined />, label: "Relationship Graph", permission: "graph.view" },
   { key: "/design", icon: <BgColorsOutlined />, label: "Design System", permission: null },
 ]

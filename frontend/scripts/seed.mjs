@@ -28,6 +28,7 @@ const PERMISSIONS = [
   ["dashboards.publish", "Publish default/targeted dashboards"],
   ["users.view", "View users"],
   ["users.manage", "Manage users (invite, deactivate, reset password)"],
+  ["partner.portal", "Access the partner/reseller portal (own org only)"],
 ]
 
 const ALL_KEYS = PERMISSIONS.map(([k]) => k)
@@ -40,6 +41,7 @@ const bundle = (on) => Object.fromEntries(TOPUP_BUNDLE.map((k) => [k, on]))
 const ROLES = [
   ["Super Admin", "Full platform access", true, ALL_KEYS],
   ["Member", "Base subscriber role (all customers)", false, ["reports.search", "reports.purchase", "graph.view", "dashboards.view", "dashboards.create"]],
+  ["Partner Rep", "Partner/reseller organisation representative", false, ["partner.portal", "reports.search", "graph.view"]],
   ["Finance", "Finance and reconciliation", false, ["finance.view", "finance.reconcile", "packages.view", "users.view"]],
   ["Sales", "Customer-facing sales role", false, ["reports.search", "reports.purchase", "graph.view", "dashboards.view", "users.view"]],
   ["Analyst", "Research and monitoring", false, ["reports.search", "graph.view", "monitoring.manage", "dashboards.view", "dashboards.create"]],
