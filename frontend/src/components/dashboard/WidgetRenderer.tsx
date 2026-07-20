@@ -3,12 +3,15 @@
 import { CloseOutlined } from "@ant-design/icons"
 import { Button, Card, Spin, Statistic, Table, Tag, Typography } from "antd"
 import Link from "next/link"
+import dynamic from "next/dynamic"
 import React, { useEffect, useState } from "react"
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 
 import SigmaGraph from "@/components/graph/SigmaGraph"
-import { rechartsTheme, seriesColor } from "@/theme/charts"
+import { plotsBase, seriesColor } from "@/theme/charts"
 import { brand } from "@/theme/tokens"
+
+// G2 renders to canvas — client-only, loaded on demand so charts never block the page
+const Column = dynamic(() => import("@ant-design/plots").then((m) => m.Column), { ssr: false })
 
 const { Text } = Typography
 
@@ -56,15 +59,13 @@ const WidgetRenderer: React.FC<{ instance: WidgetInstance; onRemove?: () => void
       return (
         <Card size="small" title={widget.name} extra={removeBtn}>
           {rows.length === 0 ? <Text type="secondary">No data yet</Text> : (
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={rows}>
-                <CartesianGrid stroke={rechartsTheme.gridStroke} vertical={false} />
-                <XAxis dataKey="name" stroke={rechartsTheme.axisStroke} tick={{ fill: rechartsTheme.tickFill, fontSize: 12 }} />
-                <YAxis stroke={rechartsTheme.axisStroke} tick={{ fill: rechartsTheme.tickFill, fontSize: 12 }} width={44} />
-                <Tooltip contentStyle={rechartsTheme.tooltipStyle} />
-                <Bar dataKey="value" fill={seriesColor(0)} radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <Column
+              {...plotsBase}
+              data={rows}
+              xField="name"
+              yField="value"
+              style={{ fill: seriesColor(0), radiusTopLeft: 4, radiusTopRight: 4, maxWidth: 32 }}
+            />
           )}
         </Card>
       )
