@@ -2,6 +2,7 @@
 
 import {
   AppstoreOutlined,
+  BarChartOutlined,
   BgColorsOutlined,
   DollarOutlined,
   FileSearchOutlined,
@@ -21,6 +22,7 @@ import { brand } from "@/theme/tokens"
 const MENU = [
   { key: "/", icon: <AppstoreOutlined />, label: "Dashboard", permission: null },
   { key: "/search", icon: <FileSearchOutlined />, label: "Search & Reports", permission: "reports.search" },
+  { key: "/dashboards", icon: <BarChartOutlined />, label: "Dashboards", permission: "dashboards.view" },
   { key: "/roles", icon: <TeamOutlined />, label: "Roles & Access", permission: "roles.view" },
   { key: "/packages", icon: <DollarOutlined />, label: "Packages & Pricing", permission: "packages.view" },
   { key: "/partners", icon: <ShopOutlined />, label: "Partners & Resellers", permission: "partners.view" },

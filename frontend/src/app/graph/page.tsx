@@ -1,8 +1,8 @@
 "use client"
 
 import { Alert, Card, Col, Row, Select, Space, Typography } from "antd"
-import { useRouter } from "next/navigation"
-import React, { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
+import React, { Suspense, useEffect, useState } from "react"
 
 import SigmaGraph from "@/components/graph/SigmaGraph"
 import type { DemoEntity } from "@/lib/demoData"
@@ -14,10 +14,10 @@ const { Text, Title } = Typography
  * competitive surface: Handshakes has no mobile story; this view must stay
  * usable on a phone. BO-change alerts deep-link here (PA-12).
  */
-export default function GraphPage() {
-  const router = useRouter()
+function GraphPageInner() {
+  const searchParams = useSearchParams()
   const [entities, setEntities] = useState<DemoEntity[]>([])
-  const [root, setRoot] = useState("whb")
+  const [root, setRoot] = useState(searchParams.get("root") ?? "whb")
 
   useEffect(() => {
     void fetch("/api/companies?q=").then(async (r) => {
@@ -56,5 +56,13 @@ export default function GraphPage() {
         <SigmaGraph rootKey={root} height={520} onNodeClick={setRoot} />
       </Card>
     </Space>
+  )
+}
+
+export default function GraphPage() {
+  return (
+    <Suspense>
+      <GraphPageInner />
+    </Suspense>
   )
 }
