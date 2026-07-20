@@ -39,12 +39,17 @@ export const navyGradient = `linear-gradient(135deg, ${brand.navy.from} 0%, ${br
 
 export const fontFamily = `Inter, "Helvetica Neue", Helvetica, Arial, sans-serif`
 
-/** Categorical palette for charts/graph — brand-derived, contrast-checked on white. */
+/**
+ * Categorical palette for charts — validated (lightness band, chroma floor,
+ * CVD separation, contrast) via the dataviz palette validator. Fixed order,
+ * never cycled; series beyond 6 fold into "Other". Chart-only — UI brand
+ * tokens above are unchanged.
+ */
 export const categorical = [
-  brand.cyan,
-  brand.navy.to,
-  brand.purple,
-  status.warning,
-  status.success,
-  neutral.textMuted,
+  "#0087C8", // cyan (brand-kin, deepened for 3:1 contrast)
+  "#C9720A", // amber
+  "#8E52B5", // purple (brand-kin)
+  "#2F9E62", // green
+  "#3D5DBF", // blue
+  "#B0532F", // brick
 ] as const

@@ -14,6 +14,7 @@ export interface AppShellProps {
   selectedKey?: string
   onMenuSelect?: MenuProps["onSelect"]
   logo?: React.ReactNode
+  headerLeft?: React.ReactNode // page title / breadcrumb
   headerRight?: React.ReactNode // user menu, notifications
   children: React.ReactNode
 }
@@ -28,6 +29,7 @@ const AppShell: React.FC<AppShellProps> = ({
   selectedKey,
   onMenuSelect,
   logo,
+  headerLeft,
   headerRight,
   children,
 }) => {
@@ -93,18 +95,19 @@ const AppShell: React.FC<AppShellProps> = ({
             borderBottom: "1px solid #E5E7EB",
           }}
         >
-          {isMobile ? (
-            <button
-              type="button"
-              aria-label="Open menu"
-              onClick={() => setDrawerOpen(true)}
-              style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer" }}
-            >
-              ☰
-            </button>
-          ) : (
-            <span />
-          )}
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {isMobile && (
+              <button
+                type="button"
+                aria-label="Open menu"
+                onClick={() => setDrawerOpen(true)}
+                style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer" }}
+              >
+                ☰
+              </button>
+            )}
+            {headerLeft}
+          </div>
           {headerRight}
         </Header>
         <Content style={{ padding: isMobile ? 12 : 24 }}>{children}</Content>

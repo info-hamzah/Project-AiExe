@@ -5,6 +5,7 @@ import { App as AntApp, Button, Card, Col, Row, Space, Statistic, Tag, Typograph
 import { useCallback, useEffect, useState } from "react"
 
 import { useSession } from "@/components/session/SessionContext"
+import StatCard from "@/components/ui/StatCard"
 import LockedFeature from "@/components/shell/LockedFeature"
 import { brand, status } from "@/theme/tokens"
 
@@ -53,16 +54,16 @@ export default function Home() {
       </Space>
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={6}>
-          <Card><Statistic title="Monitored entities" value={128} valueStyle={{ color: brand.navy.to }} /></Card>
+          <StatCard label="Monitored entities" value={128} hint="across your watchlists" accent={brand.navy.to} />
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card><Statistic title="BO changes (14d)" value={7} valueStyle={{ color: status.warning }} /></Card>
+          <StatCard label="BO changes" value={7} hint="last 14 days · Companies Act window" delta={17} accent={status.warning} />
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card><Statistic title="Reports this month" value={42} valueStyle={{ color: brand.cyan }} /></Card>
+          <StatCard label="Reports this month" value={42} delta={-8} hint="vs June" accent={brand.cyan} />
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card><Statistic title="Effective permissions" value={session?.permissions.length ?? 0} /></Card>
+          <StatCard label="Effective permissions" value={session?.permissions.length ?? 0} hint="via your roles and tier" accent={brand.purple} />
         </Col>
 
         <Col xs={24} lg={12}>

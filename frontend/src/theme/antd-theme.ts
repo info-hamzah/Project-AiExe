@@ -29,6 +29,9 @@ export const infominaTheme: ThemeConfig = {
     fontSizeHeading4: 20,
     fontSizeHeading5: 16,
     lineHeight: 1.5,
+    boxShadow: "0 1px 2px rgba(15, 52, 96, 0.04), 0 4px 16px rgba(15, 52, 96, 0.06)",
+    boxShadowSecondary: "0 1px 2px rgba(15, 52, 96, 0.04), 0 8px 24px rgba(15, 52, 96, 0.08)",
+    controlOutline: "rgba(0, 161, 228, 0.18)",
   },
   components: {
     Button: {
@@ -38,6 +41,8 @@ export const infominaTheme: ThemeConfig = {
     },
     Card: {
       borderRadiusLG: radius.lg,
+      boxShadowTertiary: "0 1px 2px rgba(15, 52, 96, 0.04), 0 4px 16px rgba(15, 52, 96, 0.06)",
+      headerFontSize: 15,
     },
     Table: {
       headerBg: neutral.bgLayout,
@@ -46,9 +51,12 @@ export const infominaTheme: ThemeConfig = {
     Menu: {
       // navy shell sidebar (dark menu variant)
       darkItemBg: "transparent",
-      darkItemSelectedBg: "rgba(0, 161, 228, 0.18)",
-      darkItemSelectedColor: brand.cyan,
-      darkItemColor: "rgba(255, 255, 255, 0.72)",
+      darkItemSelectedBg: "rgba(0, 161, 228, 0.16)",
+      darkItemSelectedColor: "#FFFFFF",
+      darkItemColor: "rgba(255, 255, 255, 0.68)",
+      darkGroupTitleColor: "rgba(255, 255, 255, 0.38)",
+      itemBorderRadius: 8,
+      itemMarginInline: 10,
     },
     Modal: {
       borderRadiusLG: radius.lg,
