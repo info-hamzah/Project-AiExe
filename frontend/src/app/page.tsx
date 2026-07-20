@@ -44,14 +44,6 @@ export default function Home() {
 
   return (
     <div>
-      <Space align="baseline" style={{ justifyContent: "space-between", width: "100%" }} wrap>
-        <Title level={3}>Overview</Title>
-        {session && (
-          <Text type="secondary">
-            {session.user.name} · <Tag color={session.packageName === "Explorer" ? "default" : "processing"}>{session.packageName} v{session.packageVersion}</Tag>
-          </Text>
-        )}
-      </Space>
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={6}>
           <StatCard label="Monitored entities" value={128} hint="across your watchlists" accent={brand.navy.to} />
@@ -66,7 +58,8 @@ export default function Home() {
           <StatCard label="Effective permissions" value={session?.permissions.length ?? 0} hint="via your roles and tier" accent={brand.purple} />
         </Col>
 
-        <Col xs={24} lg={12}>
+        <Col xs={24} lg={14}>
+          <Space direction="vertical" size={16} style={{ width: "100%" }}>
           {minaUnlocked ? (
             <Card
               title={<Space><ThunderboltOutlined style={{ color: brand.purple }} /> Mina AI — enabled</Space>}
@@ -98,20 +91,6 @@ export default function Home() {
               }}
             />
           )}
-        </Col>
-
-        <Col xs={24} lg={12}>
-          <Space direction="vertical" size={16} style={{ width: "100%" }}>
-            <Card title="Tier controls (simulated checkout — Module 2 wires real orders)">
-              <Space wrap>
-                <Button type="primary" onClick={() => act("/api/session/upgrade", { packageName: "Pro" }, "Moved to Pro")}>Upgrade to Pro</Button>
-                <Button onClick={() => act("/api/session/upgrade", { packageName: "Elite" }, "Moved to Elite")}>Elite</Button>
-                <Button danger onClick={() => act("/api/session/upgrade", { packageName: "Explorer" }, "Downgraded to Explorer")}>Downgrade to Explorer</Button>
-                <Button style={{ borderColor: brand.purple, color: brand.purple }} onClick={() => act("/api/session/topup", undefined, "RM10 bundle granted — persists after downgrade")}>
-                  Buy RM10 bundle
-                </Button>
-              </Space>
-            </Card>
             <Card title="Sneak-peek funnel (live)">
               {funnel.length === 0 ? (
                 <Text type="secondary">No events yet — visit a locked feature as an Explorer user.</Text>
@@ -125,6 +104,26 @@ export default function Home() {
                   ))}
                 </Space>
               )}
+            </Card>
+          </Space>
+        </Col>
+
+        <Col xs={24} lg={10}>
+          <Space direction="vertical" size={16} style={{ width: "100%" }}>
+            <Card title="Your plan" size="small">
+              <Text type="secondary" style={{ fontSize: 13 }}>
+                {session?.user.name} · {session?.packageName} v{session?.packageVersion}
+              </Text>
+            </Card>
+            <Card title="Tier controls (simulated checkout — Module 2 wires real orders)">
+              <Space wrap>
+                <Button type="primary" onClick={() => act("/api/session/upgrade", { packageName: "Pro" }, "Moved to Pro")}>Upgrade to Pro</Button>
+                <Button onClick={() => act("/api/session/upgrade", { packageName: "Elite" }, "Moved to Elite")}>Elite</Button>
+                <Button danger onClick={() => act("/api/session/upgrade", { packageName: "Explorer" }, "Downgraded to Explorer")}>Downgrade to Explorer</Button>
+                <Button style={{ borderColor: brand.purple, color: brand.purple }} onClick={() => act("/api/session/topup", undefined, "RM10 bundle granted — persists after downgrade")}>
+                  Buy RM10 bundle
+                </Button>
+              </Space>
             </Card>
           </Space>
         </Col>

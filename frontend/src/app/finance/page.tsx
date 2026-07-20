@@ -17,10 +17,15 @@ import {
   Tag,
   Typography,
 } from "antd"
+import dynamic from "next/dynamic"
 import React, { useCallback, useEffect, useState } from "react"
 
 import { useSession } from "@/components/session/SessionContext"
-import { brand } from "@/theme/tokens"
+import StatCard from "@/components/ui/StatCard"
+import { plotsBase, seriesColor } from "@/theme/charts"
+import { brand, status as statusColors } from "@/theme/tokens"
+
+const Column = dynamic(() => import("@ant-design/plots").then((m) => m.Column), { ssr: false })
 
 const { Text, Title } = Typography
 const rm = (cents: number) => `RM ${(cents / 100).toFixed(2)}`
@@ -35,6 +40,7 @@ export default function FinancePage() {
   const [txs, setTxs] = useState<Tx[]>([])
   const [totals, setTotals] = useState<{ source: string; cents: number; n: number }[]>([])
   const [vouchers, setVouchers] = useState<Voucher[]>([])
+  const [commission, setCommission] = useState<{ settledCents: number; paidCents: number } | null>(null)
   const [catalog, setCatalog] = useState<{ key: string; name: string }[]>([])
   const [vForm] = Form.useForm()
   const canManagePkg = session?.permissions.includes("packages.manage")
@@ -51,6 +57,8 @@ export default function FinancePage() {
     if (v.ok) setVouchers(await v.json())
     const c = await fetch("/api/catalog")
     if (c.ok) setCatalog(await c.json())
+    const l = await fetch("/api/ledger")
+    if (l.ok) setCommission((await l.json()).totals)
   }, [])
   useEffect(() => { void reload() }, [reload])
 
@@ -87,13 +95,56 @@ export default function FinancePage() {
   return (
     <Space direction="vertical" size={16} style={{ width: "100%" }}>
       <Row gutter={[16, 16]}>
-        {totals.map((t) => (
-          <Col xs={12} md={8} key={t.source}>
-            <Card size="small">
-              <Statistic title={`${t.source} revenue (${t.n} orders)`} value={rm(Number(t.cents))} valueStyle={{ color: brand.navy.to, fontSize: 20 }} />
-            </Card>
+        {totals.map((t, i) => (
+          <Col xs={12} lg={6} key={t.source}>
+            <StatCard
+              label={`${t.source} revenue`}
+              value={rm(Number(t.cents))}
+              hint={`${t.n} fulfilled order${t.n === 1 ? "" : "s"}`}
+              accent={seriesColor(i)}
+            />
           </Col>
         ))}
+        <Col xs={12} lg={6}>
+          <StatCard
+            label="Commission owed"
+            value={rm(commission?.settledCents ?? 0)}
+            hint={`${rm(commission?.paidCents ?? 0)} paid to date`}
+            accent={statusColors.warning}
+          />
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 16]}>
+        <Col xs={24} lg={12}>
+          <Card title="Revenue by channel" size="small">
+            <Column
+              {...plotsBase}
+              height={220}
+              data={totals.map((t) => ({ name: t.source, value: Number(t.cents) / 100 }))}
+              xField="name"
+              yField="value"
+              style={{ fill: seriesColor(0), radiusTopLeft: 4, radiusTopRight: 4, maxWidth: 48 }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} lg={12}>
+          <Card title="Orders by state" size="small">
+            <Column
+              {...plotsBase}
+              height={220}
+              data={Object.entries(
+                txs.reduce<Record<string, number>>((acc, t) => {
+                  acc[t.state] = (acc[t.state] ?? 0) + 1
+                  return acc
+                }, {}),
+              ).map(([name, value]) => ({ name, value }))}
+              xField="name"
+              yField="value"
+              style={{ fill: seriesColor(4), radiusTopLeft: 4, radiusTopRight: 4, maxWidth: 48 }}
+            />
+          </Card>
+        </Col>
       </Row>
 
       <Card

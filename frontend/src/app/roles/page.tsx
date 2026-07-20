@@ -3,20 +3,20 @@
 import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons"
 import {
   App as AntApp,
+  Avatar,
   Button,
   Card,
   Checkbox,
-  Col,
   Drawer,
   Form,
   Input,
-  List,
   Popconfirm,
-  Row,
   Select,
   Space,
   Table,
+  Tabs,
   Tag,
+  Timeline,
   Typography,
 } from "antd"
 import React, { useCallback, useEffect, useMemo, useState } from "react"
@@ -32,16 +32,15 @@ const api = {
   permissions: () => fetch("/api/permissions").then((r) => r.json()) as Promise<Permission[]>,
   users: () => fetch("/api/users").then((r) => r.json()) as Promise<RbacUser[]>,
   audit: () => fetch("/api/audit").then((r) => r.json()) as Promise<AuditEntry[]>,
-  createRole: (input: RoleInput) =>
-    fetch("/api/roles", { method: "POST", body: JSON.stringify(input) }),
-  updateRole: (id: string, input: RoleInput) =>
-    fetch(`/api/roles/${id}`, { method: "PATCH", body: JSON.stringify(input) }),
+  createRole: (input: RoleInput) => fetch("/api/roles", { method: "POST", body: JSON.stringify(input) }),
+  updateRole: (id: string, input: RoleInput) => fetch(`/api/roles/${id}`, { method: "PATCH", body: JSON.stringify(input) }),
   deleteRole: (id: string) => fetch(`/api/roles/${id}`, { method: "DELETE" }),
-  setUserRoles: (id: string, roleIds: string[]) =>
-    fetch(`/api/users/${id}`, { method: "PATCH", body: JSON.stringify({ roleIds }) }),
+  setUserRoles: (id: string, roleIds: string[]) => fetch(`/api/users/${id}`, { method: "PATCH", body: JSON.stringify({ roleIds }) }),
 }
 
-/** Group "module.action" keys by module for the permission matrix. */
+const AVATAR_COLORS = ["#00A1E4", "#0F3460", "#7E499D", "#2F9E62", "#C9720A"]
+const avatarColor = (name: string) => AVATAR_COLORS[name.length % AVATAR_COLORS.length]
+
 const groupPermissions = (perms: Permission[]) => {
   const groups = new Map<string, Permission[]>()
   perms.forEach((p) => {
@@ -51,12 +50,14 @@ const groupPermissions = (perms: Permission[]) => {
   return [...groups.entries()]
 }
 
+/** Roles & Access — tabbed admin console: Users, Roles, Activity. */
 export default function RolesPage() {
   const { message } = AntApp.useApp()
   const [roles, setRoles] = useState<Role[]>([])
   const [permissions, setPermissions] = useState<Permission[]>([])
   const [users, setUsers] = useState<RbacUser[]>([])
   const [audit, setAudit] = useState<AuditEntry[]>([])
+  const [userFilter, setUserFilter] = useState("")
   const [drawerRole, setDrawerRole] = useState<Role | null | "new">(null)
   const [form] = Form.useForm<RoleInput>()
 
@@ -67,6 +68,11 @@ export default function RolesPage() {
   useEffect(() => { void reload() }, [reload])
 
   const permissionGroups = useMemo(() => groupPermissions(permissions), [permissions])
+  const roleById = useMemo(() => new Map(roles.map((r) => [r.id, r])), [roles])
+  const accessAudit = useMemo(
+    () => audit.filter((a) => a.entityType === "role" || a.entityType === "user_roles"),
+    [audit],
+  )
 
   const openDrawer = (role: Role | "new") => {
     setDrawerRole(role)
@@ -79,156 +85,188 @@ export default function RolesPage() {
 
   const submit = async () => {
     const values = await form.validateFields()
-    const res =
-      drawerRole === "new"
-        ? await api.createRole(values)
-        : await api.updateRole((drawerRole as Role).id, values)
-    if (!res.ok) {
-      message.error((await res.json()).error ?? "Request failed")
-      return
-    }
+    const res = drawerRole === "new" ? await api.createRole(values) : await api.updateRole((drawerRole as Role).id, values)
+    if (!res.ok) return void message.error((await res.json()).error ?? "Request failed")
     message.success(drawerRole === "new" ? "Role created" : "Role updated")
     setDrawerRole(null)
     await reload()
   }
 
-  const remove = async (role: Role) => {
-    const res = await api.deleteRole(role.id)
-    if (!res.ok) {
-      message.error((await res.json()).error ?? "Delete failed")
-      return
-    }
-    message.success(`Deleted "${role.name}"`)
-    await reload()
-  }
+  const filteredUsers = users.filter(
+    (u) =>
+      !userFilter ||
+      u.name.toLowerCase().includes(userFilter.toLowerCase()) ||
+      u.email.toLowerCase().includes(userFilter.toLowerCase()),
+  )
 
-  const columns = [
-    {
-      title: "Role",
-      dataIndex: "name",
-      render: (name: string, role: Role) => (
-        <Space>
-          <Text strong>{name}</Text>
-          {role.isSystem && <Tag color="default">system</Tag>}
-        </Space>
-      ),
-    },
-    { title: "Description", dataIndex: "description", responsive: ["md" as const] },
-    {
-      title: "Permissions",
-      dataIndex: "permissionKeys",
-      render: (keys: string[]) => <Tag color="processing">{keys.length}</Tag>,
-    },
-    {
-      title: "Members",
-      render: (_: unknown, role: Role) => users.filter((u) => u.roleIds.includes(role.id)).length,
-    },
-    {
-      title: "",
-      render: (_: unknown, role: Role) => (
-        <Space>
-          <Button size="small" icon={<EditOutlined />} onClick={() => openDrawer(role)} />
-          <Popconfirm
-            title={`Delete role "${role.name}"?`}
-            description="Members lose this role immediately."
-            onConfirm={() => remove(role)}
-            disabled={role.isSystem}
-          >
-            <Button size="small" danger icon={<DeleteOutlined />} disabled={role.isSystem} />
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ]
+  const usersTab = (
+    <Card>
+      <Space style={{ marginBottom: 16, width: "100%", justifyContent: "space-between" }} wrap>
+        <Input.Search
+          placeholder="Filter by name or email"
+          allowClear
+          style={{ width: 280 }}
+          onChange={(e) => setUserFilter(e.target.value)}
+        />
+        <Text type="secondary">{filteredUsers.length} of {users.length} users</Text>
+      </Space>
+      <Table
+        rowKey="id"
+        dataSource={filteredUsers}
+        pagination={{ pageSize: 8, hideOnSinglePage: true }}
+        scroll={{ x: 720 }}
+        columns={[
+          {
+            title: "User",
+            fixed: "left",
+            render: (_: unknown, u: RbacUser) => (
+              <Space>
+                <Avatar size={34} style={{ backgroundColor: avatarColor(u.name) }}>{u.name[0]}</Avatar>
+                <span>
+                  <Text strong style={{ display: "block", fontSize: 13 }}>{u.name}</Text>
+                  <Text type="secondary" style={{ fontSize: 12 }}>{u.email}</Text>
+                </span>
+              </Space>
+            ),
+          },
+          {
+            title: "Roles",
+            width: 320,
+            render: (_: unknown, u: RbacUser) => (
+              <Select
+                mode="multiple"
+                variant="borderless"
+                style={{ width: "100%" }}
+                placeholder="No roles"
+                value={u.roleIds}
+                options={roles.map((r) => ({ label: r.name, value: r.id }))}
+                tagRender={({ label, closable, onClose }) => (
+                  <Tag closable={closable} onClose={onClose} color="processing" style={{ marginInlineEnd: 4 }}>
+                    {label}
+                  </Tag>
+                )}
+                onChange={async (roleIds) => {
+                  await api.setUserRoles(u.id, roleIds)
+                  await reload()
+                  message.success(`Updated ${u.name}'s roles`)
+                }}
+              />
+            ),
+          },
+          {
+            title: "Access",
+            width: 140,
+            render: (_: unknown, u: RbacUser) => {
+              const n = effectiveAccess(u, roles).size
+              return (
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {n} / {permissions.length} permissions
+                </Text>
+              )
+            },
+          },
+        ]}
+      />
+    </Card>
+  )
+
+  const rolesTab = (
+    <Card
+      extra={<Button type="primary" icon={<PlusOutlined />} onClick={() => openDrawer("new")}>New role</Button>}
+      title={`${roles.length} roles`}
+    >
+      <Table
+        rowKey="id"
+        dataSource={roles}
+        pagination={false}
+        scroll={{ x: 640 }}
+        columns={[
+          {
+            title: "Role",
+            render: (_: unknown, role: Role) => (
+              <Space>
+                <Text strong>{role.name}</Text>
+                {role.isSystem && <Tag>system</Tag>}
+              </Space>
+            ),
+          },
+          { title: "Description", dataIndex: "description", responsive: ["md"] },
+          {
+            title: "Permissions",
+            width: 120,
+            render: (_: unknown, role: Role) => <Tag color="processing">{role.permissionKeys.length}</Tag>,
+          },
+          {
+            title: "Members",
+            width: 100,
+            render: (_: unknown, role: Role) => users.filter((u) => u.roleIds.includes(role.id)).length,
+          },
+          {
+            title: "",
+            width: 110,
+            render: (_: unknown, role: Role) => (
+              <Space>
+                <Button size="small" icon={<EditOutlined />} onClick={() => openDrawer(role)} />
+                <Popconfirm
+                  title={`Delete role "${role.name}"?`}
+                  description="Members lose this role immediately."
+                  onConfirm={async () => {
+                    const res = await api.deleteRole(role.id)
+                    if (!res.ok) return void message.error((await res.json()).error ?? "Delete failed")
+                    message.success(`Deleted "${role.name}"`)
+                    await reload()
+                  }}
+                  disabled={role.isSystem}
+                >
+                  <Button size="small" danger icon={<DeleteOutlined />} disabled={role.isSystem} />
+                </Popconfirm>
+              </Space>
+            ),
+          },
+        ]}
+      />
+    </Card>
+  )
+
+  const activityTab = (
+    <Card>
+      {accessAudit.length === 0 ? (
+        <Text type="secondary">No access changes yet — create a role or reassign a user.</Text>
+      ) : (
+        <Timeline
+          items={accessAudit.slice(0, 20).map((entry) => ({
+            color: entry.action === "delete" ? "red" : entry.action === "create" ? "green" : "blue",
+            children: (
+              <span>
+                <Text style={{ fontSize: 13 }}>{entry.summary}</Text>
+                <Text type="secondary" style={{ fontSize: 12, display: "block" }}>
+                  {new Date(entry.createdAt).toLocaleString()}
+                </Text>
+              </span>
+            ),
+          }))}
+        />
+      )}
+    </Card>
+  )
 
   return (
-    <Row gutter={[16, 16]}>
-      <Col xs={24} xl={15}>
-        <Card
-          title="Roles"
-          extra={
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => openDrawer("new")}>
-              New role
-            </Button>
-          }
-        >
-          <Table
-            rowKey="id"
-            columns={columns}
-            dataSource={roles}
-            pagination={false}
-            size="middle"
-            scroll={{ x: 640 }}
-          />
-        </Card>
-      </Col>
-
-      <Col xs={24} xl={9}>
-        <Space direction="vertical" size={16} style={{ width: "100%" }}>
-          <Card title="Users & role assignment">
-            <List
-              dataSource={users}
-              renderItem={(user) => {
-                const access = effectiveAccess(user, roles)
-                return (
-                  <List.Item style={{ display: "block" }}>
-                    <Space direction="vertical" style={{ width: "100%" }} size={4}>
-                      <Space wrap>
-                        <Text strong>{user.name}</Text>
-                        <Text type="secondary">{user.email}</Text>
-                      </Space>
-                      <Select
-                        mode="multiple"
-                        style={{ width: "100%" }}
-                        placeholder="No roles"
-                        value={user.roleIds}
-                        options={roles.map((r) => ({ label: r.name, value: r.id }))}
-                        onChange={async (roleIds) => {
-                          await api.setUserRoles(user.id, roleIds)
-                          await reload()
-                          message.success(`Updated ${user.name}'s roles`)
-                        }}
-                      />
-                      <Text type="secondary" style={{ fontSize: 12 }}>
-                        Effective permissions: {access.size} of {permissions.length}
-                      </Text>
-                    </Space>
-                  </List.Item>
-                )
-              }}
-            />
-          </Card>
-
-          <Card title="Recent changes" styles={{ body: { maxHeight: 260, overflowY: "auto" } }}>
-            <List
-              size="small"
-              dataSource={audit}
-              locale={{ emptyText: "No changes yet" }}
-              renderItem={(entry) => (
-                <List.Item>
-                  <Space direction="vertical" size={0}>
-                    <Text style={{ fontSize: 13 }}>{entry.summary}</Text>
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                      {entry.actor} · {new Date(entry.createdAt).toLocaleTimeString()}
-                    </Text>
-                  </Space>
-                </List.Item>
-              )}
-            />
-          </Card>
-        </Space>
-      </Col>
+    <>
+      <Tabs
+        defaultActiveKey="users"
+        items={[
+          { key: "users", label: `Users (${users.length})`, children: usersTab },
+          { key: "roles", label: `Roles (${roles.length})`, children: rolesTab },
+          { key: "activity", label: "Activity", children: activityTab },
+        ]}
+      />
 
       <Drawer
-        title={drawerRole === "new" ? "New role" : `Edit role`}
+        title={drawerRole === "new" ? "New role" : "Edit role"}
         open={drawerRole !== null}
         onClose={() => setDrawerRole(null)}
         width={480}
-        extra={
-          <Button type="primary" onClick={submit}>
-            Save
-          </Button>
-        }
+        extra={<Button type="primary" onClick={submit}>Save</Button>}
       >
         <Form form={form} layout="vertical">
           <Form.Item name="name" label="Name" rules={[{ required: true }]}>
@@ -242,9 +280,7 @@ export default function RolesPage() {
               <Space direction="vertical" size={12} style={{ width: "100%" }}>
                 {permissionGroups.map(([module, perms]) => (
                   <div key={module}>
-                    <Text strong style={{ color: brand.navy.to, textTransform: "capitalize" }}>
-                      {module}
-                    </Text>
+                    <Text strong style={{ color: brand.navy.to, textTransform: "capitalize" }}>{module}</Text>
                     <Space direction="vertical" size={4} style={{ width: "100%", marginTop: 4 }}>
                       {perms.map((p) => (
                         <Checkbox key={p.key} value={p.key}>
@@ -260,6 +296,6 @@ export default function RolesPage() {
           </Form.Item>
         </Form>
       </Drawer>
-    </Row>
+    </>
   )
 }

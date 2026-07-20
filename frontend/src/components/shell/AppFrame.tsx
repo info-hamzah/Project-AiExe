@@ -108,12 +108,12 @@ const AppFrame: React.FC<React.PropsWithChildren> = ({ children }) => {
       }
       headerLeft={
         current && (
-          <span>
+          <Space size={8} align="baseline">
             <Text strong style={{ fontSize: 15 }}>{current.title}</Text>
-            <Text type="secondary" style={{ fontSize: 12, display: "block", marginTop: -2 }}>
+            <Text type="secondary" style={{ fontSize: 12 }} className="page-desc">
               {current.description}
             </Text>
-          </span>
+          </Space>
         )
       }
       headerRight={
