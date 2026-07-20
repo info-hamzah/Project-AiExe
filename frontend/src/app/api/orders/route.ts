@@ -20,7 +20,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const session = await requirePermission("reports.purchase")
-    const { itemKey, companyKey } = await req.json()
+    const { itemKey, companyKey, voucherCode } = await req.json()
     const company = entityByKey(companyKey)
     if (!company) return NextResponse.json({ error: "unknown company" }, { status: 404 })
     const pkgs = await pricingStore.listPackages()
@@ -38,6 +38,7 @@ export async function POST(req: Request) {
       companyKey,
       companyName: company.name,
       creditAllowance: allowance,
+      voucherCode,
     })
     return NextResponse.json(order, { status: 201 })
   } catch (e) {

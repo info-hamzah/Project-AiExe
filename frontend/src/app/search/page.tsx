@@ -47,6 +47,7 @@ export default function SearchPage() {
   const [results, setResults] = useState<DemoEntity[]>([])
   const [orders, setOrders] = useState<OrderView[]>([])
   const [buying, setBuying] = useState<string | null>(null)
+  const [voucher, setVoucher] = useState("")
   const [lastOrder, setLastOrder] = useState<OrderView | null>(null)
 
   const search = useCallback(async (query: string) => {
@@ -64,7 +65,7 @@ export default function SearchPage() {
     setBuying(companyKey)
     const res = await fetch("/api/orders", {
       method: "POST",
-      body: JSON.stringify({ itemKey: "ssm_roc_rob", companyKey }),
+      body: JSON.stringify({ itemKey: "ssm_roc_rob", companyKey, voucherCode: voucher || undefined }),
     })
     setBuying(null)
     if (!res.ok) return void message.error((await res.json()).error ?? "Purchase failed")
@@ -133,6 +134,15 @@ export default function SearchPage() {
             onSearch={(v) => void search(v)}
             allowClear
           />
+          <Space wrap>
+            <Input
+              placeholder="Voucher code (optional)"
+              style={{ width: 200 }}
+              value={voucher}
+              onChange={(e) => setVoucher(e.target.value)}
+              allowClear
+            />
+          </Space>
           <Text type="secondary" style={{ fontSize: 12 }}>
             SSM ROC/ROB profile: RM 15.40 · {session?.packageName === "Explorer"
               ? "Explorer pays per report"

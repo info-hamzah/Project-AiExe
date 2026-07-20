@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto"
 
 import { dbEnabled, q, tx } from "@/lib/db"
+import { voucherService } from "@/lib/adminOps"
 import { partnerService } from "@/lib/partnerService"
 import { pricingStore } from "@/lib/pricingStore"
 import type { PriceBreakdown } from "@/types/pricing"
@@ -33,6 +34,7 @@ interface CreateOrderInput {
   companyName: string
   /** credit allowance for this item on the buyer's current package version */
   creditAllowance: number
+  voucherCode?: string
 }
 
 /* in-memory fallback (no DATABASE_URL) */
@@ -73,6 +75,12 @@ export async function purchase(input: CreateOrderInput): Promise<OrderView> {
   if (channel?.type === "partner" && channel.discountPct > 0 && !creditUsed) {
     serviceFeeCents = Math.round(quote.serviceFeeCents * (1 - channel.discountPct / 100))
     channelNote = { partnerDiscountPct: channel.discountPct, partnerOrg: channel.orgName }
+  }
+  // Voucher (PA-19): scope-enforced, fee component only, stacks after channel discount.
+  if (input.voucherCode && !creditUsed && dbEnabled) {
+    const v = await voucherService.redeem(input.voucherCode, input.itemKey)
+    serviceFeeCents = Math.round(serviceFeeCents * (1 - v.feeDiscountPct / 100))
+    channelNote = { ...channelNote, voucherCode: input.voucherCode.toUpperCase(), voucherFeeDiscountPct: v.feeDiscountPct }
   }
   const discounted = {
     ...quote,

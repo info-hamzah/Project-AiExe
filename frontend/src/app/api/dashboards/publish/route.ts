@@ -8,7 +8,9 @@ import { dashboardService } from "@/lib/dashboardService"
 export async function POST(req: Request) {
   try {
     const session = await requirePermission("dashboards.publish")
-    await dashboardService.publishDefault(await req.json(), session.user.id)
+    const body = await req.json()
+    if (body.target) await dashboardService.publishTargeted(body, body.target, session.user.id)
+    else await dashboardService.publishDefault(body, session.user.id)
     return NextResponse.json({ ok: true })
   } catch (e) {
     return toErrorResponse(e)

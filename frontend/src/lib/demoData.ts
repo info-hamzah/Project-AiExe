@@ -72,7 +72,8 @@ export function searchEntities(q: string): DemoEntity[] {
 }
 
 /** BFS neighborhood for the graph view (depth 2 — full fixture is small). */
-export function neighborhood(rootKey: string): { nodes: DemoEntity[]; edges: DemoEdge[] } {
+/** Cap enforced server-side (PA-11): the client never receives more than `cap` nodes. */
+export function neighborhood(rootKey: string, cap = 150): { nodes: DemoEntity[]; edges: DemoEdge[] } {
   const keep = new Set<string>([rootKey])
   for (let depth = 0; depth < 2; depth++) {
     for (const e of EDGES) {
@@ -82,9 +83,11 @@ export function neighborhood(rootKey: string): { nodes: DemoEntity[]; edges: Dem
       }
     }
   }
+  const nodes = ENTITIES.filter((e) => keep.has(e.key)).slice(0, cap)
+  const kept = new Set(nodes.map((n) => n.key))
   return {
-    nodes: ENTITIES.filter((e) => keep.has(e.key)),
-    edges: EDGES.filter((e) => keep.has(e.source) && keep.has(e.target)),
+    nodes,
+    edges: EDGES.filter((e) => kept.has(e.source) && kept.has(e.target)),
   }
 }
 

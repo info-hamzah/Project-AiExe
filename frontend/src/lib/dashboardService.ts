@@ -27,13 +27,31 @@ const valid = (config: DashboardConfig): DashboardConfig => ({
 })
 
 export const dashboardService = {
-  async currentFor(userId: string): Promise<{ config: DashboardConfig; source: "personal" | "default" | "starter" }> {
+  async currentFor(userId: string): Promise<{ config: DashboardConfig; source: "personal" | "targeted" | "default" | "starter" }> {
     if (!dbEnabled) return { config: STARTER, source: "starter" }
     const personal = await q<{ config: DashboardConfig }>(
       "SELECT config FROM dashboard_configs WHERE owner_type = 'user' AND owner_id = $1 ORDER BY updated_at DESC LIMIT 1",
       [userId],
     )
     if (personal.rowCount) return { config: valid(personal.rows[0].config), source: "personal" }
+    // Targeted (PA-13): matches by role name or the user's partner org.
+    const targeted = await q<{ config: DashboardConfig }>(
+      `SELECT dc.config FROM dashboard_configs dc
+       WHERE dc.owner_type = 'targeted' AND (
+         EXISTS (
+           SELECT 1 FROM user_roles ur JOIN roles r ON r.id = ur.role_id
+           WHERE ur.user_id = $1 AND dc.target->'roles' ? r.name
+         )
+         OR EXISTS (
+           SELECT 1 FROM users u WHERE u.id = $1
+             AND u.onboarding_partner_org_id IS NOT NULL
+             AND dc.target->'partnerOrgs' ? u.onboarding_partner_org_id::text
+         )
+       )
+       ORDER BY dc.updated_at DESC LIMIT 1`,
+      [userId],
+    )
+    if (targeted.rowCount) return { config: valid(targeted.rows[0].config), source: "targeted" }
     const def = await q<{ config: DashboardConfig }>(
       "SELECT config FROM dashboard_configs WHERE owner_type = 'admin_default' ORDER BY updated_at DESC LIMIT 1",
     )
@@ -56,6 +74,17 @@ export const dashboardService = {
         [userId, JSON.stringify(v)],
       )
     }
+  },
+
+  async publishTargeted(config: DashboardConfig, target: { roles?: string[]; partnerOrgs?: string[] }, actorId: string): Promise<void> {
+    if (!dbEnabled) throw Object.assign(new Error("requires DATABASE_URL"), { status: 501 })
+    const v = valid(config)
+    await q(
+      "INSERT INTO dashboard_configs (owner_type, owner_id, target, schema_version, config, created_by) VALUES ('targeted', NULL, $1, 1, $2, $3)",
+      [JSON.stringify({ roles: target.roles ?? [], partnerOrgs: target.partnerOrgs ?? [] }), JSON.stringify(v), actorId],
+    )
+    await writeAudit(actorId, "dashboard", "targeted", "publish",
+      `Published targeted dashboard (${v.widgets.length} widgets → roles: ${(target.roles ?? []).join(",") || "-"}; orgs: ${(target.partnerOrgs ?? []).length})`)
   },
 
   async publishDefault(config: DashboardConfig, actorId: string): Promise<void> {

@@ -17,7 +17,7 @@ Ground-up revamp of **AiExe**, Infomina's AI-powered KYB/KYC platform connected 
 | [`docs/adr/ADR-002-purchase-state-machine.md`](docs/adr/ADR-002-purchase-state-machine.md) | Order lifecycle + reconciler |
 | [`docs/ui-design-system.md`](docs/ui-design-system.md) | Approved design system (implemented in [`frontend/src/theme`](frontend/src/theme)) |
 
-Project tracking: **Linear → team `PA` → project "AiExe Phase 1 MVP"** (24 issues across 5 milestones; `migrated` label = carried from the old Jira boards with lineage notes).
+Project tracking: **Linear → team `PA` → project "AiExe Phase 1 MVP"** (24 issues across 5 milestones; `migrated` label = carried from the old Jira boards with lineage notes). **Status: all Phase A–C modules built and verified on the local stack** — see [`docs/demo-script.md`](docs/demo-script.md) for the stakeholder walkthrough.
 
 ## Plan at a glance
 
